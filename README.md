@@ -16,6 +16,14 @@ Add the following directive to your Javascript manifest file (application.js):
 //= require angular-leaflet
 ```
 
+Add the following directive to your CSS manifest file (application.css):
+
+```css
+*= require angular-leaflet
+```
+
+
+
 
 ## Contributing
 
