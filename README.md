@@ -13,7 +13,7 @@ gem "angular-leaflet-rails"
 Add the following directive to your Javascript manifest file (application.js):
 
 ```js
-//= require angular-ui
+//= require angular-leaflet
 ```
 
 
