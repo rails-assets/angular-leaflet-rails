@@ -9,6 +9,7 @@ leafletDirective.directive("leaflet", ["$http", "$log", function ($http, $log) {
             center: "=center",
             tilelayer: "=tilelayer",
             markers: "=markers",
+            leafletMarkers: "=leafletMarkers",
             path: "=path",
             maxZoom: "@maxzoom"
         },
@@ -39,7 +40,7 @@ leafletDirective.directive("leaflet", ["$http", "$log", function ($http, $log) {
             if (attrs.center && scope.center) {
 
                 if (scope.center.lat && scope.center.lng && scope.center.zoom) {
-                    map.setView(new L.LatLng(scope.center.lat, scope.center.lng), scope.center.zoom);
+                    map.setView([scope.center.lat, scope.center.lng], scope.center.zoom);
                 } else if (scope.center.autoDiscover === true) {
                     map.locate({ setView: true, maxZoom: maxZoom });
                 }
@@ -52,9 +53,11 @@ leafletDirective.directive("leaflet", ["$http", "$log", function ($http, $log) {
                 });
 
                 map.on("zoomend", function(e) {
-                    scope.$apply(function (s) {
-                        s.center.zoom = map.getZoom();
-                    });
+                    if (scope.center.zoom !== map.getZoom()){
+                        scope.$apply(function (s) {
+                            s.center.zoom = map.getZoom();
+                        });
+                    }
                 });
 
                 scope.$watch("center", function (center, oldValue) {
@@ -65,8 +68,6 @@ leafletDirective.directive("leaflet", ["$http", "$log", function ($http, $log) {
             }
 
             if (attrs.markers && scope.markers) {
-                var markers = {};
-
                 var createAndLinkMarker = function(key, scope) {
                     var data = scope.markers[key];
                     var marker = new L.marker(
@@ -89,7 +90,10 @@ leafletDirective.directive("leaflet", ["$http", "$log", function ($http, $log) {
                     scope.$watch('markers.' + key, function(newval, oldval) {
                         if (!newval) {
                             map.removeLayer(markers[key]);
-                            delete markers[key];
+                            delete leafletMarkers[key];
+                            if (attrs.leafletMarkers) {
+                                delete scope.leafletMarkers[key];
+                            }
                             return;
                         }
 
@@ -113,13 +117,33 @@ leafletDirective.directive("leaflet", ["$http", "$log", function ($http, $log) {
                     return marker;
                 }; // end of create and link marker
 
+                var leafletMarkers = {}
+
+                // Expose the map object, for testing purposes
+                if (attrs.leafletMarkers) {
+                    scope.leafletMarkers = {};
+                }
+
+                // Create the initial objects
+                for (var key in scope.markers) {
+                    var marker = createAndLinkMarker(key, scope);
+                    map.addLayer(marker);
+                    leafletMarkers[key] = marker;
+                    if (attrs.leafletMarkers) {
+                        scope.leafletMarkers[key] = marker;
+                    }
+                }
+
                 scope.$watch("markers", function(newMarkerList) {
                     // add new markers
-                    for (var key in scope.markers) {
-                        if (markers[key] === undefined) {
+                    for (var key in newMarkerList) {
+                        if (leafletMarkers[key] === undefined) {
                             var marker = createAndLinkMarker(key, scope);
                             map.addLayer(marker);
-                            markers[key] = marker;
+                            leafletMarkers[key] = marker;
+                            if (attrs.leafletMarkers) {
+                                scope.leafletMarkers[key] = marker;
+                            }
                         }
                     }
                 }, true);
