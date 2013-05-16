@@ -1,5 +1,5 @@
 require "angular-leaflet-rails/version"
-require "angular-rails"
+require "angularjs-rails"
 require "leaflet-rails"
 
 module AngularLeaflet
